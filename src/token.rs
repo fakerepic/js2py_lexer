@@ -31,4 +31,6 @@ pub enum Type {
     Identifier,
     Number,
     StringLiteral,
+
+    LexerError
 }

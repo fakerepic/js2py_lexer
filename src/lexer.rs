@@ -2,6 +2,9 @@ use crate::statefn::StateFn;
 use crate::token::{Token, Type};
 use std::sync::mpsc;
 
+/// Create a token stream from the input string
+///
+/// * `input`: the input string to tokenize
 pub fn token_stream(input: &str) -> mpsc::Receiver<Token> {
     let (tx, rx) = mpsc::channel();
     let mut l = Lexer {
@@ -26,26 +29,31 @@ pub struct Lexer {
 
 impl Lexer {
     pub fn run(&mut self) {
-        // Run the state machine
         let mut f = self.initial_state.clone();
+
+        // Run the state functions until there are no more state functions to run
+        // This pattern can decouple the lexer from the state functions and make it easier to
+        // extend the lexer with new state functions.
         while let Some(next_f) = f.call(self) {
             f = next_f;
         }
     }
+
+    // The following methods are used by the state functions to interact with the lexer context:
+
     pub fn current(&self) -> String {
         self.input[self.start..self.pos].to_string()
     }
+    /// Emit a token with the current value
     pub fn emit(&mut self, typ: Type) {
         let val = self.input[self.start..self.pos].to_string();
-        let _ = self.sender.send(Token { typ, val });
+        self.send(typ, val);
         self.start = self.pos;
     }
-    pub fn set_input(&mut self, input: &str) {
-        self.input = input.to_string();
-        self.start = 0;
-        self.pos = 0;
+    /// Send a token (without updating the start position)
+    pub fn send(&mut self, typ: Type, val: String) {
+        let _ = self.sender.send(Token { typ, val });
     }
-
     pub fn ignore(&mut self) {
         self.start = self.pos;
     }

@@ -1,12 +1,12 @@
+//! The implementation of the state functions that the lexer uses to parse the input string.
+
 use crate::lexer::Lexer;
 pub use crate::statefn::StateFn;
 use crate::token::Type;
 
-// TODO: error handling
-
 impl Default for StateFn {
     fn default() -> StateFn {
-        StateFn { f: lex_start }
+        StateFn::from(lex_start)
     }
 }
 
@@ -37,25 +37,24 @@ pub fn lex_start(lexer: &mut Lexer) -> Option<StateFn> {
     }
 
     match c.unwrap() {
-        'a'..='z' | 'A'..='Z' => return Some(StateFn::from(lex_alpha)),
-        '0'..='9' => return Some(StateFn::from(lex_number)),
-        '"' => return Some(StateFn::from(lex_string_literal)),
-        '-' => return Some(StateFn::from(lex_minus)), // '-' or number
-        '=' => return Some(StateFn::from(lex_eq_op)), // '=' or '=='
+        'a'..='z' | 'A'..='Z' => Some(StateFn::from(lex_alpha)),
+        '0'..='9' => Some(StateFn::from(lex_number)),
+        '"' => Some(StateFn::from(lex_string_literal)),
+        '-' => Some(StateFn::from(lex_minus)), // '-' or number
+        '=' => Some(StateFn::from(lex_eq_op)), // '=' or '=='
 
         // all blank characters
         ' ' | '\t' | '\n' | '\r' => {
             lexer.step();
             lexer.ignore();
+            Some(StateFn::from(lex_start))
         }
 
-        _ => {
-            // println!("Error: unexpected character '{}'", lexer.peek().unwrap());
-            lexer.step();
-        }
+        _ => lex_error(
+            lexer,
+            format!("unexpected character: '{}'", c.unwrap()).as_str(),
+        ),
     }
-
-    Some(StateFn::from(lex_start))
 }
 
 fn lex_eq_op(lexer: &mut Lexer) -> Option<StateFn> {
@@ -100,12 +99,14 @@ fn lex_string_literal(lexer: &mut Lexer) -> Option<StateFn> {
             return Some(StateFn::from(lex_start));
         }
         if !SPECIAL_CHARS.contains(c) && !DIGITS_AND_ALPHA.contains(c) {
-            // println!("Error: unexpected character '{}'", c);
-            return None;
+            return lex_error(
+                lexer,
+                format!("unexpected character in string literal: '{}'", c).as_str(),
+            );
         }
         lexer.step();
     }
-    None
+    lex_error(lexer, "unterminated string literal")
 }
 
 fn lex_alpha(lexer: &mut Lexer) -> Option<StateFn> {
@@ -120,4 +121,9 @@ fn lex_alpha(lexer: &mut Lexer) -> Option<StateFn> {
         _ => lexer.emit(Type::Identifier),
     }
     Some(StateFn::from(lex_start))
+}
+
+fn lex_error(lexer: &mut Lexer, msg: &str) -> Option<StateFn> {
+    lexer.send(Type::LexerError, msg.to_string());
+    None
 }
