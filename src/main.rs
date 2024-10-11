@@ -1,19 +1,17 @@
-use toy_lang_lexer::lexer::analyze;
+//! usage: ./{{project_name}} <filename>
 
 fn main() {
-    let code = "\
-        var x;\n\
-        var y;\n\
-        input x;\n\
-        if (x > 5) {\n\
-            y = x * (x / 2 - 10);\n\
-        }\n\
-        print \"After \tif, finished!\";\
-    ";
-
-    let items = analyze(code);
-
-    for item in items {
-        println!("('{:?}', '{}')", item.typ, item.val);
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() != 2 {
+        eprintln!("Usage: {} <filename>", args[0]);
+        std::process::exit(1);
     }
+
+    let filename = &args[1];
+    let code = std::fs::read_to_string(filename).expect("Failed to read file");
+
+    toy_lang_lexer::lexer::analyze(
+        &code,
+        Box::new(|item| println!("('{:?}', {:?})", item.typ, item.val)),
+    );
 }
