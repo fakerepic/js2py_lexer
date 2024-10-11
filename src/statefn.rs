@@ -1,7 +1,7 @@
 use crate::lexer::Lexer;
 
 #[derive(Clone)]
-/// StateFn is a function pointer that takes a mutable reference to a Lexer and returns an StateFn
+/// StateFn is a wrapper around a function that returns the next state function to run
 /// or None.
 pub struct StateFn {
     f: fn(&mut Lexer) -> Option<StateFn>,

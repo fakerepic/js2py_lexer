@@ -70,21 +70,22 @@ fn lex_eq_op(lexer: &mut Lexer) -> Option<StateFn> {
 
 fn lex_minus(lexer: &mut Lexer) -> Option<StateFn> {
     lexer.step();
-    match lexer.peek() {
-        Some('0'..='9') => Some(StateFn::from(lex_number)),
-        _ => {
-            lexer.emit(Type::Minus);
-            Some(StateFn::from(lex_start))
-        }
+    if let Some('0'..='9') = lexer.peek() {
+        Some(StateFn::from(lex_number))
+    } else {
+        lexer.emit(Type::Minus);
+        Some(StateFn::from(lex_start))
     }
 }
 
 fn lex_number(lexer: &mut Lexer) -> Option<StateFn> {
-    while let Some('0'..='9') = lexer.peek() {
+    if let Some('0'..='9') = lexer.peek() {
         lexer.step();
+        Some(StateFn::from(lex_number))
+    } else {
+        lexer.emit(Type::Number);
+        Some(StateFn::from(lex_start))
     }
-    lexer.emit(Type::Number);
-    Some(StateFn::from(lex_start))
 }
 
 static SPECIAL_CHARS: &str = " !#$%&'()*+,-./:;<=>?@[]^_{}|~";
