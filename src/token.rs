@@ -1,5 +1,5 @@
 #[derive(Debug, Clone)]
-pub struct Item {
+pub struct Token {
     pub typ: Type,
     pub val: String,
 }

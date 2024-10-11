@@ -1,17 +1,18 @@
 use crate::statefn::StateFn;
-use crate::token::{Item, Type};
+use crate::token::{Token, Type};
+use std::sync::mpsc;
 
-/// Analyze the input string and return a vector of tokens
-/// * `input`: The input string to analyze
-pub fn analyze(input: &str, output_fn: Box<dyn FnMut(Item)>) {
+pub fn token_stream(input: &str) -> mpsc::Receiver<Token> {
+    let (tx, rx) = mpsc::channel();
     let mut l = Lexer {
         input: input.to_string(),
         start: 0,
         pos: 0,
         initial_state: StateFn::default(),
-        output_fn,
+        sender: tx,
     };
-    l.run();
+    std::thread::spawn(move || l.run());
+    rx
 }
 
 /// Lexer context
@@ -20,7 +21,7 @@ pub struct Lexer {
     start: usize,
     pos: usize,
     initial_state: StateFn,
-    output_fn: Box<dyn FnMut(Item)>,
+    sender: mpsc::Sender<Token>,
 }
 
 impl Lexer {
@@ -36,7 +37,7 @@ impl Lexer {
     }
     pub fn emit(&mut self, typ: Type) {
         let val = self.input[self.start..self.pos].to_string();
-        (self.output_fn)(Item { typ, val });
+        let _ = self.sender.send(Token { typ, val });
         self.start = self.pos;
     }
     pub fn set_input(&mut self, input: &str) {
