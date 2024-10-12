@@ -17,6 +17,6 @@ fn main() {
     let input = std::fs::read_to_string(filename).expect("Failed to read file");
     let token_stream = toy_lang_lexer::lexer::token_stream(&input);
     for token in token_stream {
-        println!("('{:?}', {:?})", token.typ, token.val);
+        println!("('{:?}', '{}')", token.typ, token.val);
     }
 }
