@@ -1,4 +1,5 @@
 use crate::lexer::Lexer;
+use crate::statefn_impl::lex_start;
 
 #[derive(Clone)]
 /// StateFn is a wrapper around a function that returns the next state function to run
@@ -15,3 +16,10 @@ impl StateFn {
         (self.f)(lexer)
     }
 }
+
+impl Default for StateFn {
+    fn default() -> StateFn {
+        StateFn::from(lex_start)
+    }
+}
+

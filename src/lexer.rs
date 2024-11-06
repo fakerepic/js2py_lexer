@@ -1,6 +1,6 @@
 use crate::statefn::StateFn;
 use crate::token::{Token, Type};
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc};
 
 /// Create a token stream from the input string
 ///
@@ -8,7 +8,7 @@ use std::sync::mpsc;
 pub fn token_stream(input: &str) -> mpsc::Receiver<Token> {
     let (tx, rx) = mpsc::channel();
     let mut l = Lexer {
-        input: input.to_string(),
+        input: Arc::from(input),
         start: 0,
         pos: 0,
         initial_state: StateFn::default(),
@@ -20,11 +20,12 @@ pub fn token_stream(input: &str) -> mpsc::Receiver<Token> {
 
 /// Lexer context
 pub struct Lexer {
-    input: String,
+    input: Arc<str>,
     start: usize,
     pos: usize,
     initial_state: StateFn,
     sender: mpsc::Sender<Token>,
+    // error: Option<String>,
 }
 
 impl Lexer {
@@ -46,13 +47,16 @@ impl Lexer {
     }
     /// Emit a token with the current value
     pub fn emit(&mut self, typ: Type) {
-        let val = self.input[self.start..self.pos].to_string();
-        self.send(typ, val);
+        self.send(typ);
         self.start = self.pos;
     }
     /// Send a token (without updating the start position)
-    pub fn send(&mut self, typ: Type, val: String) {
-        let _ = self.sender.send(Token { typ, val });
+    pub fn send(&mut self, typ: Type) {
+        let _ = self.sender.send(Token {
+            typ,
+            start: self.start,
+            end: self.pos,
+        });
     }
     pub fn ignore(&mut self) {
         self.start = self.pos;
@@ -63,6 +67,11 @@ impl Lexer {
     pub fn step(&mut self) -> Option<char> {
         self.pos += self.peek()?.len_utf8();
         self.peek()
+    }
+    pub fn back(&mut self) {
+        if self.pos > 0 {
+            self.pos -= 1;
+        }
     }
     pub fn accept(&mut self, valid: &str) -> bool {
         if let Some(c) = self.peek() {
@@ -76,6 +85,22 @@ impl Lexer {
     pub fn accept_run(&mut self, valid: &str) -> bool {
         let mut accepted = false;
         while self.accept(valid) {
+            accepted = true;
+        }
+        accepted
+    }
+    pub fn accept_except(&mut self, invalid: &str) -> bool {
+        if let Some(c) = self.peek() {
+            if !invalid.contains(c) {
+                self.step();
+                return true;
+            }
+        }
+        false
+    }
+    pub fn accept_run_except(&mut self, invalid: &str) -> bool {
+        let mut accepted = false;
+        while self.accept_except(invalid) {
             accepted = true;
         }
         accepted

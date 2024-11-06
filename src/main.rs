@@ -1,6 +1,5 @@
 //! usage: ./{{project_name}} <filename>
 
-
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() != 2 {
@@ -16,7 +15,25 @@ fn main() {
 
     let input = std::fs::read_to_string(filename).expect("Failed to read file");
     let token_stream = toy_lang_lexer::lexer::token_stream(&input);
-    for token in token_stream {
-        println!("('{:?}', '{}')", token.typ, token.val);
+    for token in token_stream
+        .iter()
+        .filter(|t| t.typ != toy_lang_lexer::token::Type::LineTerminator)
+    {
+        println!("('{:?}', '{}')", token.typ, &input[token.start..token.end]);
     }
+}
+
+#[test]
+fn test1() {
+    use toy_lang_lexer::token::Type;
+    use toy_lang_lexer::*;
+    let input = "var x = 10;";
+    let token_stream = lexer::token_stream(input);
+    let tokens: Vec<_> = token_stream.iter().collect();
+    assert_eq!(tokens.len(), 5);
+    assert_eq!(tokens[0].typ, Type::Var);
+    assert_eq!(tokens[1].typ, Type::Identifier);
+    assert_eq!(tokens[2].typ, Type::Eq);
+    assert_eq!(tokens[3].typ, Type::Decimal);
+    assert_eq!(tokens[4].typ, Type::Semicolon);
 }
