@@ -17,9 +17,10 @@ fn main() {
     let token_stream = toy_lang_lexer::lexer::token_stream(&input);
     for token in token_stream
         .iter()
-        .filter(|t| t.typ != toy_lang_lexer::token::Type::LineTerminator)
+        // .filter(|t| t.typ != toy_lang_lexer::token::Type::LineTerminator)
     {
-        println!("('{:?}', '{}')", token.typ, &input[token.start..token.end]);
+        // println!("('{:?}', '{}')", token.typ, &input[token.start..token.end]);
+        println!("{:?}", token);
     }
 }
 
