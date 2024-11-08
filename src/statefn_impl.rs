@@ -361,7 +361,7 @@ fn lex_single_line_comment(lexer: &mut Lexer) -> Option<StateFn> {
     lexer.accept("//");
     while let Some(c) = lexer.peek() {
         if c == '\n' || c == '\r' || c == '\u{2028}' || c == '\u{2029}' {
-            // lexer.emit(Comment);
+            lexer.ignore();
             return sf!(lex_start);
         }
         lexer.step();
@@ -376,7 +376,7 @@ fn lex_multi_line_comment(lexer: &mut Lexer) -> Option<StateFn> {
         if c == '*' {
             lexer.step();
             if lexer.accept("/") {
-                // lexer.emit(Comment);
+                lexer.ignore();
                 return sf!(lex_start);
             }
         }
