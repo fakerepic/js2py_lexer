@@ -13,6 +13,7 @@ macro_rules! sf {
 
 pub fn lex_start(lexer: &mut Lexer) -> Option<StateFn> {
     if lexer.eof() {
+        lexer.emit(EOF);
         return None;
     }
 

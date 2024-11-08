@@ -131,6 +131,7 @@ pub enum Type {
     // Other
     Identifier,
     LineTerminator,
+    EOF,
     LexerError,
 }
 

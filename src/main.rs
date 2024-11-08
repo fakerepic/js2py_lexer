@@ -1,4 +1,4 @@
-//! usage: ./{{project_name}} <filename>
+//! usage: ./{{project_name}} <filename> (only for testing, you can use this crate as a library)
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -20,7 +20,7 @@ fn main() {
         // .filter(|t| t.typ != toy_lang_lexer::token::Type::LineTerminator)
     {
         // println!("('{:?}', '{}')", token.typ, &input[token.start..token.end]);
-        println!("{:?}", token);
+        println!("{:?} \"{}\"", token, &input[token.start..token.end].replace("\n", "\\n"));
     }
 }
 
